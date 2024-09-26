@@ -16,6 +16,9 @@
     <ClCompile Include="src\GifSaver.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Constellation.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -36,6 +39,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\GifSaver.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Constellation.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

@@ -16,15 +16,28 @@ public:
 		return positions.size();
 	}
 
+	struct StarAddress {
+		size_t meshIndex;
+		size_t starIndex;
+		float magnitude;
+		glm::vec3 position;
+	};
+
+	vector<StarAddress> brightestStarsInFocus(ofCamera &camera, uint64_t frameNo, size_t count);
+	void setConstellation(vector<StarAddress> &stars, size_t thisMesh);
+
 private:
 	vector<glm::vec3> positions;
 	vector<ofFloatColor> colors;
 	vector<float> magnitudes;
 	vector<uint32_t> lastFocus;
+	vector<float> inConstellation;
 
 	GLint lastFocusedLocation;
+	GLint inConstellationLocation;
 	ofBufferObject bufMagnitudes;
 	ofBufferObject bufLastFocus;
+	ofBufferObject bufInConstellation;
 
 	ofFloatColor randomColor;
 	static const size_t NUM_PROBES = 5;

@@ -5,6 +5,7 @@ void StarMesh::push(glm::vec3 position, float magnitude, ofFloatColor color) {
 	colors.push_back(color);
 	magnitudes.push_back(magnitude);
 	lastFocus.push_back(0);
+	inConstellation.push_back(0);
 }
 
 void StarMesh::init(ofShader &shader) {
@@ -16,6 +17,7 @@ void StarMesh::init(ofShader &shader) {
 
 	bufMagnitudes.allocate(magnitudes, GL_STATIC_DRAW);
 	bufLastFocus.allocate(lastFocus, GL_DYNAMIC_DRAW);
+	bufInConstellation.allocate(inConstellation, GL_DYNAMIC_DRAW);
 
 	ofVbo &starVbo = star.getVbo();
 
@@ -25,9 +27,11 @@ void StarMesh::init(ofShader &shader) {
 
 	GLint magnitudeLocation = shader.getAttributeLocation("magnitude");
 	lastFocusedLocation = shader.getAttributeLocation("lastFocused");
+	inConstellationLocation = shader.getAttributeLocation("inConstellation");
 
 	starVbo.setAttributeBuffer(magnitudeLocation, bufMagnitudes, 1, 0);
 	starVbo.setAttributeBuffer(lastFocusedLocation, bufLastFocus, 1, 0);
+	starVbo.setAttributeBuffer(inConstellationLocation, bufInConstellation, 1, 0);
 }
 
 void updateStarFocus(const ofCamera &camera, const nite::UserMap &userMap, const vector<glm::vec3> &positions, vector<uint32_t> &lastFocus) {
@@ -81,4 +85,29 @@ bool StarMesh::isInView(ofCamera &camera) {
 
 void StarMesh::draw() {
 	star.draw(OF_MESH_POINTS);
+}
+
+vector<StarMesh::StarAddress> StarMesh::brightestStarsInFocus(ofCamera &camera, uint64_t frameNo, size_t count) {
+	vector<StarAddress> brightest;
+	if (!isInView(camera)) return brightest;
+	brightest.reserve(count);
+
+	for (size_t i = 0; i < positions.size() && brightest.size() < count; i++) {
+		if (frameNo - lastFocus[i] > 10) {
+			continue;
+		}
+		brightest.push_back(StarAddress{ 0, i, magnitudes[i], positions[i] });
+	}
+
+	return brightest;
+}
+
+void StarMesh::setConstellation(vector<StarAddress> &stars, size_t thisMesh) {
+	for (auto &const address : stars) {
+		if (thisMesh == address.meshIndex) {
+			inConstellation[address.starIndex] = 1.0;
+		}
+	}
+	ofVbo &starVbo = star.getVbo();
+	starVbo.updateAttributeData(inConstellationLocation, (float*)inConstellation.data(), (int)positions.size());
 }

@@ -4,6 +4,7 @@ uniform int frameNo;
 in vec4 varyingColor;
 in float varyingFocus;
 in float varyingMagnitude;
+in float varyingConstellation;
 out vec4 outputColor;
 
 float invertedMagnitude = -1 * varyingMagnitude + 7;
@@ -28,14 +29,22 @@ float twinkle() {
     return 1 + 0.2 * fract(sin(dot(star.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
+float highlightConstellation() {
+    return 1.0 + 10.0 * varyingConstellation;
+}
+
+float highlight() {
+    return step(0.5, varyingConstellation) * 2.0 + step(varyingConstellation, 0.5) * varyingFocus;
+}
+
 void main() {
     float d = distance(vec2(0.5), gl_PointCoord.st) * falloff;
     float i = intensity;
-    vec4 col = star(varyingColor, i, varyingFocus, d);
+    vec4 col = star(varyingColor, i, highlight(), d);
     // float a = smoothstep(0, 3, col.r + col.g + col.b);
     float a = smoothstep(vec3(0), vec3(1), col.rgb).g;
     // float a = length(smoothstep(vec3(0), vec3(1), col.rgb));
-    // a = a / max(1, varyingMagnitude) * (1 + varyingFocus);
-    a = a / (1 + smoothstep(0, 7, varyingMagnitude) * 6) * (1 + varyingFocus);
+    // a = a / max(1, varyingMagnitude) * (1 + highlight());
+    a = a / (1 + smoothstep(0, 7, varyingMagnitude) * 6) * (1 + highlight());
     outputColor = vec4(col.rgb, a) * twinkle();
 }

@@ -180,6 +180,7 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Constellation.cpp" />
     <ClCompile Include="src\GifSaver.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ofApp.cpp" />
@@ -188,6 +189,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\colorIndex.h" />
+    <ClInclude Include="src\Constellation.h" />
     <ClInclude Include="src\GifSaver.h" />
     <ClInclude Include="src\StarMesh.h" />
     <ClInclude Include="src\ofApp.h" />

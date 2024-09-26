@@ -37,8 +37,17 @@ void ofApp::setup() {
 	glm::vec3 whatev;
 	glm::vec3 mirror(-1.0, 1.0, 1.0);
 
-	map<string, StarMesh> constellations;
+	vector<ofJson> stars;
+	stars.reserve(result.size());
 	for (auto &star : result) {
+		stars.push_back(star);
+	}
+	std::sort(stars.begin(), stars.end(), [](ofJson &const a, ofJson &const b) {
+		return a["magnitude"] < b["magnitude"];
+	});
+
+	map<string, StarMesh> constellationZones;
+	for (auto &const star : stars) {
 		glm::vec3 xyz(star["x"], star["z"], star["y"]); // intentionally swap y/z
 		glm::vec3 pos;
 		bool b = glm::intersectLineSphere(origin, xyz, origin, r, pos, whatev, whatev, whatev);
@@ -52,10 +61,10 @@ void ofApp::setup() {
 			findStar("Rigel", rigel, pos, color, star);
 			findStar("Sirius", sirius, pos, color, star);
 
-			constellations[star["con"]].push(pos, magnitude, color);
+			constellationZones[star["con"]].push(pos, magnitude, color);
 		}
 	}
-	for (auto it : constellations) {
+	for (auto it : constellationZones) {
 		//cout << "Constellation " << it.first << " has " << it.second.size() << " stars" << endl;
 		star_meshes.push_back(it.second);
 	}
@@ -128,8 +137,16 @@ void ofApp::draw() {
 	//drawStar(rigel, "Rigel", camera);
 	//drawStar(sirius, "Sirius", camera);
 
-	ofSetColor(255);
+	
+	ofSetColor(120, 120, 180);
 	camera.begin();
+	for (auto &const constellation : constellations) {
+		for (auto &const pair : constellation.edges) {
+			ofDrawLine(std::get<0>(pair), std::get<1>(pair));
+		}
+	}
+
+	ofSetColor(255);
 	starShader.begin();
 	starShader.setUniform1i("frameNo", ofGetFrameNum());
 	for (auto &mesh : star_meshes) {
@@ -172,6 +189,9 @@ void ofApp::keyReleased(int key) {
 	switch (key) {
 	case ' ':
 		shaderDirty = true;
+		break;
+	case 'c':
+		snapshotConstellation();
 		break;
 	case 'f':
 		ofToggleFullscreen();
@@ -240,4 +260,41 @@ void ofApp::reloadShader() {
 		}
 		shaderDirty = false;
 	}
+}
+
+vector<StarMesh::StarAddress> getBrightFocusedStars(ofCamera &camera, size_t count, vector<StarMesh> &const star_meshes) {
+	vector<StarMesh::StarAddress> brightest;
+
+	for (size_t i = 0; i < star_meshes.size(); i++) {
+		auto stars = star_meshes[i].brightestStarsInFocus(camera, ofGetFrameNum(), count);
+		for (auto &const star : stars) {
+			brightest.push_back(StarMesh::StarAddress{ i, star.starIndex, star.magnitude, star.position });
+		}
+	}
+
+	std::sort(
+		brightest.begin(),
+		brightest.end(),
+		[](StarMesh::StarAddress &const a, StarMesh::StarAddress &const b) {
+			return a.magnitude < b.magnitude;
+		}
+	);
+
+	brightest.resize(count);
+	return brightest;
+}
+
+void ofApp::snapshotConstellation() {
+	auto brightest = getBrightFocusedStars(camera, 10, star_meshes);
+	//cout << "Brightest";
+	//for (auto &const star : brightest) {
+	//	cout << " " << star.meshIndex << " " << star.starIndex;
+	//}
+	//cout << endl;
+	for (size_t meshIndex = 0; meshIndex < star_meshes.size(); meshIndex++) {
+		star_meshes[meshIndex].setConstellation(brightest, meshIndex);
+	}
+
+	Constellation c = Constellation::fromStars(brightest);
+	constellations.push_back(c);
 }
